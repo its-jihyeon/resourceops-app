@@ -4,7 +4,7 @@ ResourceOps는 AWS EKS 환경에서 Spring Boot 애플리케이션을 GitOps 방
 
 이 저장소(`team2-app`)는 애플리케이션 소스 코드와 CI 파이프라인을 담당합니다. 배포 대상 Kubernetes manifest와 Terraform 인프라 코드는 별도 config 저장소(`team2-config`)에서 관리하며, GitHub Actions가 Docker image를 ECR에 push한 뒤 config 저장소의 Kustomize image tag를 자동으로 갱신합니다. 이후 ArgoCD가 config 저장소 변경을 감지해 EKS 클러스터에 배포합니다.
 
-tea2-config url : https://github.com/CLD-05/team2-config.git
+team2-config url : https://github.com/CLD-05/team2-config
 
 ## 프로젝트 목표
 
