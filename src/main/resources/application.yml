@@ -28,12 +28,12 @@ resource-optimizer:
     accumulation-interval-ms: 60000
   cloudwatch:
     enabled: true
-    fixed-rate-ms: 600000
+    fixed-rate-ms: 300000
   aws:
     region: ap-northeast-2
     alb-load-balancer-dimension: app/k8s-resource-resource-c5d4133575/0549ffba1540a2a9
     nat-gateway-id: nat-0854b9c44fe1d4867
-    polling-minutes: 10
+    polling-minutes: 5
   aws-pricing:
     alb-hour-usd: 0.0225
     alb-lcu-hour-usd: 0.008
@@ -41,7 +41,7 @@ resource-optimizer:
     nat-gateway-data-gb-usd: 0.045
     data-transfer-out-gb-usd: 0.09
   simulation:
-    dev-night-start-time: "12:00"
+    dev-night-start-time: "12:30"
     dev-night-end-time: "13:30"
     alb-night-shutdown-enabled: true
     nat-night-shutdown-enabled: true
