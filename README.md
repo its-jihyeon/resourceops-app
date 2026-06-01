@@ -32,21 +32,28 @@ Dockerfile
 pom.xml
 .github/workflows/
 
-resourceops-app (Main Repository)
-│
-├── resourceops-iac
-│     └─ Terraform 기반 AWS 인프라 구축
-│
-├── resourceops-monitoring
-│     └─ Prometheus / Grafana 모니터링 구성
-│
-└── resourceops-app
-      ├─ Spring Boot API
-      ├─ Prometheus 연동
-      ├─ 리소스 추천 알고리즘
-      ├─ 비용 최적화 분석
-      └─ 추천 결과 저장
-
+team2-app/
+├── src/
+│ └── main/
+│ ├── java/
+│ │ ├── com/example/deploylab/
+│ │ └── com/example/resourceops/
+│ │ ├── recommendation/
+│ │ │ ├── calculator/
+│ │ │ ├── cloudwatch/
+│ │ │ ├── config/
+│ │ │ ├── controller/
+│ │ │ ├── dto/
+│ │ │ ├── metrics/
+│ │ │ ├── pricing/
+│ │ │ ├── scheduler/
+│ │ │ └── service/
+│ │ └── loadtest/
+│ └── resources/
+│ └── application.yml
+├── Dockerfile
+├── pom.xml
+└── .github/workflows/ci.yml
 ```
 실행 순서
 
@@ -116,3 +123,38 @@ Memory 사용률 = 평균 Memory 사용량 ÷ Memory Request
   ↓
       
 절감률 계산
+
+
+Team2-Config
+```bash
+team2-config/
+├── apps/
+│ └── resource-ops/
+│ ├── base/
+│ │ ├── deployment.yaml
+│ │ ├── service.yaml
+│ │ ├── gateway.yaml
+│ │ ├── httproute.yaml
+│ │ ├── configmap.yaml
+│ │ ├── external-secret.yaml
+│ │ ├── serviceaccount.yaml
+│ │ ├── servicemonitor.yaml
+│ │ ├── load-balancer-configuration.yaml
+│ │ ├── target-group-configuration.yaml
+│ │ └── kustomization.yaml
+│ └── overlays/
+│ └── dev/
+│ └── kustomization.yaml
+├── argocd/
+├── infra/
+│ ├── backend.tf
+│ ├── main.tf
+│ ├── variables.tf
+│ ├── outputs.tf
+│ └── modules/
+├── monitoring/
+└── platform/
+├── gateway-api/
+└── external-secrets/
+```
+
