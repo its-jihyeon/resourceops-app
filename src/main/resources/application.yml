@@ -42,6 +42,6 @@ resource-optimizer:
     data-transfer-out-gb-usd: 0.09
   simulation:
     dev-night-start-time: "12:30"
-    dev-night-end-time: "13:31"
+    dev-night-end-time: "13:30"
     alb-night-shutdown-enabled: true
     nat-night-shutdown-enabled: true
