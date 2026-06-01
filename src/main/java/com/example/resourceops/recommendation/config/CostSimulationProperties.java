@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class CostSimulationProperties {
 
   private String devNightStartTime = "12:30";
-  private String devNightEndTime = "13:31";
+  private String devNightEndTime = "13:30";
   private boolean albNightShutdownEnabled = true;
   private boolean natNightShutdownEnabled = true;
 }
