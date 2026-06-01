@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>부하 테스트 대시보드</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d0f14; --surface: #161920; --surface2: #1e2230;
+      --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
+      --text: #e8eaf0; --muted: #7a7f96; --hint: #4a4f66;
+      --cpu: #4e9eff; --cpu-dim: rgba(78,158,255,0.12);
+      --mem: #f5a623; --mem-dim: rgba(245,166,35,0.12);
+      --delay: #4ecb8d; --delay-dim: rgba(78,203,141,0.12);
+      --response: #b06fff; --response-dim: rgba(176,111,255,0.12);
+      --download: #ff7eb3; --download-dim: rgba(255,126,179,0.12);
+      --json: #00d4d4; --json-dim: rgba(0,212,212,0.12);
+      --danger: #ff5c6a; --radius: 10px; --radius-lg: 14px;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono','Fira Code','Courier New',monospace; font-size: 13px; min-height: 100vh; padding: 2rem; }
+    header { margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1.25rem; display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; }
+    .header-left h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+    .header-left p { font-size: 11px; color: var(--muted); margin-top: 4px; letter-spacing: 0.05em; }
+    .badge-dev { background: rgba(78,203,141,0.15); color: var(--delay); border: 1px solid rgba(78,203,141,0.3); border-radius: 6px; font-size: 10px; padding: 3px 10px; letter-spacing: 0.1em; font-weight: 700; text-transform: uppercase; }
+    .alb-row { display: flex; gap: 8px; margin-bottom: 1.25rem; }
+    .alb-row input { flex: 1; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); color: var(--text); font-family: inherit; font-size: 12px; padding: 10px 14px; outline: none; transition: border-color 0.2s; }
+    .alb-row input::placeholder { color: var(--hint); }
+    .alb-row input:focus { border-color: rgba(255,255,255,0.25); }
+    button { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); color: var(--text); font-family: inherit; font-size: 12px; padding: 10px 18px; cursor: pointer; transition: background 0.15s, border-color 0.15s; white-space: nowrap; }
+    button:hover { background: var(--surface2); border-color: rgba(255,255,255,0.2); }
+    button:active { transform: scale(0.98); }
+    .load-config { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.1rem 1.25rem; margin-bottom: 1.25rem; }
+    .load-config-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+    .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .param-row { margin-bottom: 0; }
+    .param-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+    .param-label span:last-child { color: var(--text); font-weight: 700; }
+    input[type="range"] { -webkit-appearance: none; width: 100%; height: 3px; border-radius: 2px; background: var(--surface2); outline: none; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--muted); cursor: pointer; transition: transform 0.15s; }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 1.25rem; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.1rem 1.25rem; position: relative; overflow: hidden; }
+    .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+    .card-cpu::before { background: var(--cpu); }
+    .card-mem::before { background: var(--mem); }
+    .card-delay::before { background: var(--delay); }
+    .card-response::before { background: var(--response); }
+    .card-download::before { background: var(--download); }
+    .card-json::before { background: var(--json); }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .card-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+    .card-cpu .card-title { color: var(--cpu); }
+    .card-mem .card-title { color: var(--mem); }
+    .card-delay .card-title { color: var(--delay); }
+    .card-response .card-title { color: var(--response); }
+    .card-download .card-title { color: var(--download); }
+    .card-json .card-title { color: var(--json); }
+    .tag { font-size: 10px; padding: 2px 8px; border-radius: 5px; font-weight: 700; letter-spacing: 0.05em; }
+    .tag-cpu { background: var(--cpu-dim); color: var(--cpu); }
+    .tag-mem { background: var(--mem-dim); color: var(--mem); }
+    .tag-delay { background: var(--delay-dim); color: var(--delay); }
+    .tag-response { background: var(--response-dim); color: var(--response); }
+    .tag-download { background: var(--download-dim); color: var(--download); }
+    .tag-json { background: var(--json-dim); color: var(--json); }
+    .card .param-row { margin-bottom: 10px; }
+    .card-cpu input[type="range"]::-webkit-slider-thumb { background: var(--cpu); }
+    .card-mem input[type="range"]::-webkit-slider-thumb { background: var(--mem); }
+    .card-delay input[type="range"]::-webkit-slider-thumb { background: var(--delay); }
+    .card-response input[type="range"]::-webkit-slider-thumb { background: var(--response); }
+    .card-download input[type="range"]::-webkit-slider-thumb { background: var(--download); }
+    .card-json input[type="range"]::-webkit-slider-thumb { background: var(--json); }
+    .run-btn { width: 100%; margin-top: 14px; padding: 9px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+    .card-cpu .run-btn { border-color: rgba(78,158,255,0.3); color: var(--cpu); }
+    .card-mem .run-btn { border-color: rgba(245,166,35,0.3); color: var(--mem); }
+    .card-delay .run-btn { border-color: rgba(78,203,141,0.3); color: var(--delay); }
+    .card-response .run-btn { border-color: rgba(176,111,255,0.3); color: var(--response); }
+    .card-download .run-btn { border-color: rgba(255,126,179,0.3); color: var(--download); }
+    .card-json .run-btn { border-color: rgba(0,212,212,0.3); color: var(--json); }
+    .card-cpu .run-btn:hover { background: var(--cpu-dim); }
+    .card-mem .run-btn:hover { background: var(--mem-dim); }
+    .card-delay .run-btn:hover { background: var(--delay-dim); }
+    .card-response .run-btn:hover { background: var(--response-dim); }
+    .card-download .run-btn:hover { background: var(--download-dim); }
+    .card-json .run-btn:hover { background: var(--json-dim); }
+    .stop-btn { width: 100%; margin-top: 8px; padding: 9px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-color: rgba(255,92,106,0.3); color: var(--danger); display: none; }
+    .stop-btn:hover { background: rgba(255,92,106,0.1); }
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem 1rem; text-align: center; }
+    .stat-label { font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+    .stat-value { font-size: 20px; font-weight: 700; }
+    .stat-total { color: var(--text); }
+    .stat-ok { color: var(--delay); }
+    .stat-err { color: var(--danger); }
+    .stat-rps { color: var(--cpu); }
+    .log-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .log-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+    .status-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--hint); transition: background 0.3s; }
+    .dot.running { background: var(--mem); animation: pulse 1s infinite; }
+    .dot.ok { background: var(--delay); }
+    .dot.err { background: var(--danger); }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+    .log-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem; min-height: 160px; max-height: 280px; overflow-y: auto; font-size: 12px; line-height: 1.8; }
+    .log-box::-webkit-scrollbar { width: 4px; }
+    .log-box::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+    .log-entry { display: flex; gap: 10px; align-items: baseline; padding: 2px 0; }
+    .log-time { color: var(--hint); flex-shrink: 0; font-size: 11px; }
+    .log-msg { flex: 1; }
+    .log-ok { color: var(--delay); }
+    .log-err { color: var(--danger); }
+    .log-info { color: var(--cpu); }
+    .log-warn { color: var(--mem); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <h1>⚡ Load Test Dashboard</h1>
+      <p>team2-project · EKS dev 환경 부하 테스트</p>
+    </div>
+    <span class="badge-dev">dev only</span>
+  </header>
+
+  <div class="alb-row">
+    <input type="text" id="albDns" placeholder="ALB DNS 주소 입력 (예: k8s-xxx.ap-northeast-2.elb.amazonaws.com)" />
+    <button onclick="clearLog()">로그 초기화</button>
+  </div>
+
+  <div class="load-config">
+    <div class="load-config-title">부하 설정 (공통)</div>
+    <div class="config-grid">
+      <div class="param-row">
+        <div class="param-label"><span>동시 요청 수 (VU)</span><span id="vuVal">10</span></div>
+        <input type="range" min="1" max="50" step="1" value="10" id="vuCount" oninput="document.getElementById('vuVal').textContent=this.value" />
+      </div>
+      <div class="param-row">
+        <div class="param-label"><span>지속 시간</span><span id="durVal">60s</span></div>
+        <input type="range" min="10" max="300" step="10" value="60" id="durSec" oninput="document.getElementById('durVal').textContent=this.value+'s'" />
+      </div>
+      <div class="param-row">
+        <div class="param-label"><span>요청 간격</span><span id="intervalVal">500ms</span></div>
+        <input type="range" min="100" max="3000" step="100" value="500" id="intervalMs" oninput="document.getElementById('intervalVal').textContent=this.value+'ms'" />
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card card-cpu">
+      <div class="card-header"><span class="card-title">CPU 부하</span><span class="tag tag-cpu">CPU</span></div>
+      <div class="param-row">
+        <div class="param-label"><span>durationMs</span><span id="cpuVal">500ms</span></div>
+        <input type="range" min="100" max="5000" step="100" value="500" id="cpuDur" oninput="document.getElementById('cpuVal').textContent=this.value+'ms'" />
+      </div>
+      <button class="run-btn" id="cpuRunBtn" onclick="startLoad('cpu')">▶ 부하 시작</button>
+      <button class="stop-btn" id="cpuStopBtn" onclick="stopLoad('cpu')">■ 중지</button>
+    </div>
+
+    <div class="card card-mem">
+      <div class="card-header"><span class="card-title">Memory 부하</span><span class="tag tag-mem">MEM</span></div>
+      <div class="param-row">
+        <div class="param-label"><span>sizeMb</span><span id="memVal">100MB</span></div>
+        <input type="range" min="10" max="128" step="10" value="100" id="memSize" oninput="document.getElementById('memVal').textContent=this.value+'MB'" />
+      </div>
+      <div class="param-row">
+        <div class="param-label"><span>holdSeconds</span><span id="holdVal">30s</span></div>
+        <input type="range" min="5" max="60" step="5" value="30" id="holdSec" oninput="document.getElementById('holdVal').textContent=this.value+'s'" />
+      </div>
+      <button class="run-btn" id="memRunBtn" onclick="startLoad('memory')">▶ 부하 시작</button>
+      <button class="stop-btn" id="memStopBtn" onclick="stopLoad('memory')">■ 중지</button>
+    </div>
+
+    <div class="card card-delay">
+      <div class="card-header"><span class="card-title">응답 지연</span><span class="tag tag-delay">DELAY</span></div>
+      <div class="param-row">
+        <div class="param-label"><span>delayMs</span><span id="delayVal">1000ms</span></div>
+        <input type="range" min="100" max="10000" step="100" value="1000" id="delayMs" oninput="document.getElementById('delayVal').textContent=this.value+'ms'" />
+      </div>
+      <button class="run-btn" id="delayRunBtn" onclick="startLoad('delay')">▶ 부하 시작</button>
+      <button class="stop-btn" id="delayStopBtn" onclick="stopLoad('delay')">■ 중지</button>
+    </div>
+
+    <div class="card card-response">
+      <div class="card-header"><span class="card-title">큰 응답</span><span class="tag tag-response">RESPONSE</span></div>
+      <div class="param-row">
+        <div class="param-label"><span>sizeMb</span><span id="responseVal">1MB</span></div>
+        <input type="range" min="1" max="50" step="1" value="1" id="responseMb" oninput="document.getElementById('responseVal').textContent=this.value+'MB'" />
+      </div>
+      <button class="run-btn" id="responseRunBtn" onclick="startLoad('response')">▶ 부하 시작</button>
+      <button class="stop-btn" id="responseStopBtn" onclick="stopLoad('response')">■ 중지</button>
+    </div>
+
+    <div class="card card-download">
+      <div class="card-header"><span class="card-title">파일 다운로드</span><span class="tag tag-download">DOWNLOAD</span></div>
+      <div class="param-row">
+        <div class="param-label"><span>sizeMb</span><span id="downloadVal">10MB</span></div>
+        <input type="range" min="1" max="50" step="1" value="10" id="downloadMb" oninput="document.getElementById('downloadVal').textContent=this.value+'MB'" />
+      </div>
+      <button class="run-btn" id="downloadRunBtn" onclick="startLoad('download')">▶ 부하 시작</button>
+      <button class="stop-btn" id="downloadStopBtn" onclick="stopLoad('download')">■ 중지</button>
+    </div>
+
+    <div class="card card-json">
+      <div class="card-header"><span class="card-title">큰 JSON</span><span class="tag tag-json">JSON</span></div>
+      <div class="param-row">
+        <div class="param-label"><span>count</span><span id="jsonVal">1000</span></div>
+        <input type="range" min="100" max="10000" step="100" value="1000" id="jsonCount" oninput="document.getElementById('jsonVal').textContent=this.value" />
+      </div>
+      <button class="run-btn" id="jsonRunBtn" onclick="startLoad('json')">▶ 부하 시작</button>
+      <button class="stop-btn" id="jsonStopBtn" onclick="stopLoad('json')">■ 중지</button>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">총 요청</div><div class="stat-value stat-total" id="statTotal">0</div></div>
+    <div class="stat-card"><div class="stat-label">성공</div><div class="stat-value stat-ok" id="statOk">0</div></div>
+    <div class="stat-card"><div class="stat-label">실패</div><div class="stat-value stat-err" id="statErr">0</div></div>
+    <div class="stat-card"><div class="stat-label">RPS</div><div class="stat-value stat-rps" id="statRps">0</div></div>
+  </div>
+
+  <div class="log-header">
+    <span class="log-title">실행 결과</span>
+    <div class="status-row"><div class="dot" id="statusDot"></div><span id="statusText">대기 중</span></div>
+  </div>
+  <div class="log-box" id="logBox">
+    <div class="log-entry"><span class="log-time">--:--:--</span><span class="log-msg log-info">ALB DNS를 입력하고 부하 시작 버튼을 누르세요.</span></div>
+  </div>
+
+  <script>
+    const timers = {};
+    const stats = { total: 0, ok: 0, err: 0, startTime: null };
+
+    function now() { return new Date().toTimeString().slice(0,8); }
+
+    function addLog(type, msg) {
+      const box = document.getElementById('logBox');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = '<span class="log-time">'+now()+'</span><span class="log-msg log-'+type+'">'+msg+'</span>';
+      box.appendChild(entry);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function clearLog() {
+      document.getElementById('logBox').innerHTML = '';
+      stats.total = 0; stats.ok = 0; stats.err = 0; stats.startTime = null;
+      updateStats(); setStatus('idle');
+    }
+
+    function setStatus(s) {
+      const dot = document.getElementById('statusDot');
+      const txt = document.getElementById('statusText');
+      if (s==='running') { dot.className='dot running'; txt.textContent='부하 발생 중...'; }
+      else if (s==='ok')  { dot.className='dot ok';      txt.textContent='완료'; }
+      else if (s==='err') { dot.className='dot err';     txt.textContent='오류 발생'; }
+      else                { dot.className='dot';         txt.textContent='대기 중'; }
+    }
+
+    function updateStats() {
+      document.getElementById('statTotal').textContent = stats.total;
+      document.getElementById('statOk').textContent = stats.ok;
+      document.getElementById('statErr').textContent = stats.err;
+      if (stats.startTime && stats.total > 0) {
+        const elapsed = (Date.now() - stats.startTime) / 1000;
+        document.getElementById('statRps').textContent = (stats.total / elapsed).toFixed(1);
+      } else {
+        document.getElementById('statRps').textContent = '0';
+      }
+    }
+
+    function buildUrl(type, dns) {
+      const base = 'http://' + dns + '/api/load/';
+      if (type === 'cpu') return base + 'cpu?durationMs=' + document.getElementById('cpuDur').value;
+      if (type === 'memory') return base + 'memory?sizeMb=' + document.getElementById('memSize').value + '&holdSeconds=' + document.getElementById('holdSec').value;
+      if (type === 'delay') return base + 'delay?delayMs=' + document.getElementById('delayMs').value;
+      if (type === 'response') return base + 'response?sizeMb=' + document.getElementById('responseMb').value;
+      if (type === 'download') return base + 'download?sizeMb=' + document.getElementById('downloadMb').value;
+      if (type === 'json') return base + 'json?count=' + document.getElementById('jsonCount').value;
+    }
+
+    async function sendOne(type, dns) {
+      const url = buildUrl(type, dns);
+      try {
+        const start = Date.now();
+        const res = await fetch(url);
+        const elapsed = Date.now() - start;
+        stats.total++;
+        if (res.ok) {
+          stats.ok++;
+          addLog('ok', '['+res.status+'] '+type.toUpperCase()+' 완료 ('+elapsed+'ms)');
+        } else {
+          stats.err++;
+          addLog('err', '['+res.status+'] '+type.toUpperCase()+' 실패 ('+elapsed+'ms)');
+        }
+      } catch(e) {
+        stats.total++; stats.err++;
+        addLog('err', type.toUpperCase()+' 오류: '+e.message);
+      }
+      updateStats();
+    }
+
+    function startLoad(type) {
+      const dns = document.getElementById('albDns').value.trim();
+      if (!dns) { addLog('err', 'ALB DNS를 입력해주세요.'); return; }
+      if (timers[type]) return;
+
+      const vu = parseInt(document.getElementById('vuCount').value);
+      const dur = parseInt(document.getElementById('durSec').value) * 1000;
+      const interval = parseInt(document.getElementById('intervalMs').value);
+
+      if (!stats.startTime) stats.startTime = Date.now();
+
+      document.getElementById(type+'RunBtn').style.display = 'none';
+      document.getElementById(type+'StopBtn').style.display = 'block';
+      setStatus('running');
+      addLog('warn', type.toUpperCase()+' 부하 시작 — VU:'+vu+' / '+dur/1000+'s / interval:'+interval+'ms');
+
+      const endAt = Date.now() + dur;
+      timers[type] = setInterval(() => {
+        if (Date.now() >= endAt) { stopLoad(type); return; }
+        for (let i = 0; i < vu; i++) sendOne(type, dns);
+      }, interval);
+    }
+
+    function stopLoad(type) {
+      if (timers[type]) { clearInterval(timers[type]); delete timers[type]; }
+      document.getElementById(type+'RunBtn').style.display = 'block';
+      document.getElementById(type+'StopBtn').style.display = 'none';
+      addLog('info', type.toUpperCase()+' 부하 중지');
+      if (Object.keys(timers).length === 0) setStatus('ok');
+    }
+  </script>
+</body>
+</html>
