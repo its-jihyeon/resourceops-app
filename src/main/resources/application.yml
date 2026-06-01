@@ -45,3 +45,7 @@ resource-optimizer:
     dev-night-end-time: "09:40"
     alb-night-shutdown-enabled: true
     nat-night-shutdown-enabled: true
+  prometheus:
+    enabled: true
+    url: http://kube-prometheus-stack-prometheus.monitoring:9090
+    fixed-rate-ms: 300000
