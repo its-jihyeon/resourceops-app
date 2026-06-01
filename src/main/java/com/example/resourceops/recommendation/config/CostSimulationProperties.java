@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "resource-optimizer.simulation")
 public class CostSimulationProperties {
 
-  private String devNightStartTime = "12:00";
+  private String devNightStartTime = "12:30";
   private String devNightEndTime = "13:30";
   private boolean albNightShutdownEnabled = true;
   private boolean natNightShutdownEnabled = true;
