@@ -36,6 +36,7 @@ CPU/Memory 요청량과 주요 AWS 컴포넌트 비용을 실시간으로 수집
 <img width="3572" height="1492" alt="image" src="https://github.com/user-attachments/assets/9b052b9a-d28f-4665-a1a8-89e116be3321" />
 
 <br>
+<br>
 
 ## 내가 담당한 부분
 
