@@ -1,10 +1,17 @@
-# ResourceOps
+# ResourceOps - APP
 
-ResourceOps는 AWS EKS 환경에서 Spring Boot 애플리케이션을 GitOps 방식으로 배포하고, Prometheus와 CloudWatch metric을 기반으로 Kubernetes 리소스 비용 최적화 추천을 제공하는 프로젝트입니다.
+### GitOps 기반 배포 자동화 및 AWS 비용 최적화 추천
 
-이 저장소(`team2-app`)는 애플리케이션 소스 코드와 CI 파이프라인을 담당합니다. 배포 대상 Kubernetes manifest와 Terraform 인프라 코드는 별도 config 저장소(`team2-config`)에서 관리하며, GitHub Actions가 Docker image를 ECR에 push한 뒤 config 저장소의 Kustomize image tag를 자동으로 갱신합니다. 이후 ArgoCD가 config 저장소 변경을 감지해 EKS 클러스터에 배포합니다.
+> 이 저장소는 멋쟁이사자처럼 AWS 기반 DevOps 엔지니어 과정 팀 프로젝트(6인)의 fork 입니다. <br>
+> 본 README는 담당 영역을 중심으로 재작성했습니다. <br>
 
-team2-config url : https://github.com/CLD-05/team2-config
+<br>
+
+원본 저장소
+* **App 레포** : [team2-resourceops-app](https://github.com/CLD-05/team2-app)
+* **Config 레포** : [team2-resourceops-config](https://github.com/CLD-05/team2-config)
+
+<br>
 
 ## 프로젝트 목표
 
