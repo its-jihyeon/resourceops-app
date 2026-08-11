@@ -66,4 +66,4 @@ CPU/Memory 요청량과 주요 AWS 컴포넌트 비용을 실시간으로 수집
 
 ## 기술 스택
 
-GitHub Actions · ArgoCD · Helm · Kustomize
+GitHub Actions · ArgoCD · Kustomize · AWS ECR
