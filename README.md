@@ -58,9 +58,9 @@ CPU/Memory 요청량과 주요 AWS 컴포넌트 비용을 실시간으로 수집
 ### [GitHub Actions ECR Push 자격 증명 누락]
 - 상황 : GitHub Actions 파이프라인에서 AWS OIDC 인증과 Docker 빌드는 성공했으나 ECR로 이미지를 푸시하는 단계에서 인증 거부 에러 발생
 - 원인 분석 : 파이프라인이 AWS에 접속할 권한은 정상적으로 얻었지만 Docker 자체가 ECR에 로그인하는 절차가 빠져 있는 것을 발견
-- 시도한 방법 : GitHub Actions 로그 분석을 통해 OIDC 인증 및 빌드 단계 정상 통과 확인 → Docker CLI의 ECR 레지스트리 로그인 여부 점검
+- 시도한 방법 : GitHub Actions 실패 로그 분석 → ECR Push 단계에서 인증 에러가 발생한 것을 확인
 - 최종 해결 : Docker가 ECR 토큰을 획득하여 자동 로그인할 수 있도록 파이프라인에 aws-actions/amazon-ecr-login@v2 단계를 명시적으로 추가
-- 배운 점 : AWS 인프라 접근 권한을 얻는 것과, 도커(Docker)가 저장소(ECR)에 로그인하는 과정은 별개로 처리해야 한다는 것을 이해
+- 배운 점 : AWS 인프라 접근 권한을 얻는 것과 Docker가 ECR에 로그인하는 과정은 별개로 처리해야 한다는 것을 이해
 
 <br>
 
