@@ -28,3 +28,39 @@ CPU/Memory 요청량과 주요 AWS 컴포넌트 비용을 실시간으로 수집
 - 기간 : 2026.05.21 ~ 2026.06.01
 - 팀 구성 : 6인
 - 담당 : GitOps 기반 CI/CD 파이프라인 설계 및 구축
+
+<br>
+
+## CI/CD 다이어그램
+
+<img width="3572" height="1492" alt="image" src="https://github.com/user-attachments/assets/9b052b9a-d28f-4665-a1a8-89e116be3321" />
+
+<br>
+
+## 내가 담당한 부분
+
+### CI 파이프라인 구축
+- App Repo에 코드 Push / PR Merge 시 자동으로 빌드 트리거
+- Maven Build → Docker Build → Amazon ECR Push → Config Repo 이미지 태그 자동 갱신
+- GitHub OIDC 기반 AWS 인증
+- 빌드부터 Config Repo 반영까지 평균 1분 20초 수준으로 유지
+- 관련 코드 : `.github/workflows/ci.yml`
+
+<br>
+
+**[CD 파이프라인 구축](https://github.com/its-jihyeon/resourceops-config)**
+
+<br>
+
+## 트러블슈팅
+
+### [문제 제목]
+- 상황 :
+- 원인 분석 :
+- 시도한 방법 :
+- 최종 해결 :
+- 배운 점 :
+
+## 기술 스택
+
+GitHub Actions · ArgoCD · Helm · Kustomize
